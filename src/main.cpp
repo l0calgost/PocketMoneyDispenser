@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Servo.h>
-#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <config.h>
 
 const char* ssid     = WLAN_SSID;
@@ -8,33 +8,43 @@ const char* password = WLAN_PASSWORD;
 
 Servo servo;
 
-WiFiServer server(80);
+ESP8266WebServer server(80);
 
 // put function declarations here:
 void eject();
 void connectWifi();
+void handleRoot();
 
 void setup() {
   Serial.begin(115200);
 
   connectWifi();
-  server.begin();
 
   servo.attach(2);
   servo.write(180);
+
+  server.begin();
+  server.on("/",handleRoot);
+  server.on("/eject", eject);
 }
 
 void loop() {
-  delay(3000);
-  eject();
+  server.handleClient();
 }
 
+void handleRoot() {
+  String message="<h1>Spend some money!!</h1>";
+  message += "<br/><br/>";
+  message += "<a href=\"/eject\">Bling Bling</a>";
+  server.send(200, "text/html", message);
+}
 
 void  eject() {
   Serial.println("ejecting...");
   servo.write(50);
   delay(300);
   servo.write(180);
+  handleRoot();
 }
 
 void connectWifi()
